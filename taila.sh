@@ -456,15 +456,15 @@ show_error(){
 
 # SELECT INSTALLATION DISK
 choose_disk(){
-       depth=$(lsblk | grep 'disk' | wc -l)
-       local DISKS=()
-       for d in $(lsblk | grep disk | awk '{printf "%s\n%s \\\n",$1,$4}'); do
-            DISKS+=("$d")
-       done
+    depth=$(lsblk | grep 'disk' | wc -l)
+    local DISKS=()
+    for d in $(lsblk | grep disk | awk '{printf "%s\n%s \\\n",$1,$4}'); do
+         DISKS+=("$d")
+    done
 
-       whiptail --title "CHOOSE AN INSTALLATION DISK" \
-           --radiolist " Your Installation Disk: " 20 70 "$depth" \
-           "${DISKS[@]}" 3>&1 1>&2 2>&3
+    whiptail --title "CHOOSE AN INSTALLATION DISK" \
+        --radiolist " Your Installation Disk: " 20 70 "$depth" \
+        "${DISKS[@]}" 3>&1 1>&2 2>&3
 }
 
 # INSTALL TO WHAT DEVICE?
