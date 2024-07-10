@@ -456,32 +456,47 @@ show_error(){
 
 # SELECT INSTALLATION DISK
 choose_disk() {
-    # List available disks with detailed information
-    echo "Available disks:"
-    lsblk -dpno NAME,SIZE,MODEL | grep -E 'disk$'
+    # Fetch disk details
+    mapfile -t disks < <(lsblk -dpno NAME,SIZE,MODEL | grep -E 'disk$')
     
-    # Prompt user for input
-    read -p "Enter the disk identifier (e.g., sda): " disk_id
+    # Prepare disk choices for whiptail
+    local choices=()
+    for disk in "${disks[@]}"; do
+        # Extract name and size for the disk
+        disk_name=$(echo "$disk" | awk '{print $1}')
+        disk_info=$(echo "$disk" | awk '{$1=""; print $0}')
+        disk_name=${disk_name#/dev/} # Remove '/dev/' for whiptail display
+        choices+=("$disk_name" "$disk_info" OFF)
+    done
     
-    # Validate input
-    if [ -z "$disk_id" ]; then
-        echo "No input provided. Exiting."
+    # Check if we found any disks
+    if [ ${#choices[@]} -eq 0 ]; then
+        whiptail --title "Error" --msgbox "No disks found. Please ensure your disks are connected." 10 60
+        return 1
+    fi
+    
+    # Use whiptail to present choices to the user
+    local disk_choice
+    disk_choice=$(whiptail --title "Choose an Installation Disk" --radiolist \
+        "Select a disk (use space to select):" 20 70 10 "${choices[@]}" 3>&2 2>&1 1>&3)
+    
+    # Check if a disk was selected
+    if [ -z "$disk_choice" ]; then
+        whiptail --title "Warning" --msgbox "No disk selected. Operation canceled." 10 60
+        return 1
+    fi
+    
+    # Construct the full device path
+    local selected_disk_path="/dev/$disk_choice"
+    
+    # Verify the selected disk path
+    if [ ! -b "$selected_disk_path" ]; then
+        whiptail --title "Error" --msgbox "Invalid disk selected: $disk_choice. Please select a valid disk." 10 60
         return 1
     fi
 
-    # Construct the disk path
-    disk_path="/dev/$disk_id"
-    
-    # Check if the disk path is valid
-    if [ ! -b "$disk_path" ]; then
-        echo "Invalid disk identifier: $disk_id. Please ensure the disk exists."
-        return 1
-    fi
-    
-    echo "Selected disk: $disk_path"
-    # Further processing can go here
+    echo "$selected_disk_path"
 }
-
 
 # INSTALL TO WHAT DEVICE?
 get_install_device(){
