@@ -455,40 +455,33 @@ show_error(){
 #################  DISK FUNCTIONS  ########################
 
 # SELECT INSTALLATION DISK
-choose_disk(){
-    # Fetch disk details
-    disks=$(lsblk -dpno NAME,SIZE,MODEL | grep -E 'disk$' | awk '{print $1, $2, $3}')
+choose_disk() {
+    # List available disks with detailed information
+    echo "Available disks:"
+    lsblk -dpno NAME,SIZE,MODEL | grep -E 'disk$'
     
-    # Prepare disk choices for whiptail, ensuring proper separation and quoting
-    choices=()
-    while IFS= read -r line; do
-        name=$(echo "$line" | awk '{print $1}')
-        info=$(echo "$line" | awk '{$1=""; print $0}')
-        choices+=("$name" "$info")
-    done <<< "$disks"
+    # Prompt user for input
+    read -p "Enter the disk identifier (e.g., sda): " disk_id
     
-    # Check if we found any disks
-    if [ ${#choices[@]} -eq 0 ]; then
-        echo "No disks found. Please ensure your disks are connected."
+    # Validate input
+    if [ -z "$disk_id" ]; then
+        echo "No input provided. Exiting."
+        return 1
+    fi
+
+    # Construct the disk path
+    disk_path="/dev/$disk_id"
+    
+    # Check if the disk path is valid
+    if [ ! -b "$disk_path" ]; then
+        echo "Invalid disk identifier: $disk_id. Please ensure the disk exists."
         return 1
     fi
     
-    # Use whiptail to present choices to the user
-    disk_choice=$(whiptail --title "Choose an Installation Disk" --menu "Select a disk:" 20 78 10 "${choices[@]}" 3>&2 2>&1 1>&3)
-    
-    # Check if a disk was selected
-    if [ -z "$disk_choice" ]; then
-        echo "No disk selected. Exiting."
-        return 1
-    fi
-    
-    # Print or process the selected disk
-    echo "Selected disk: $disk_choice"
-    # Further processing can go here, such as passing the selected disk to another function
+    echo "Selected disk: $disk_path"
+    # Further processing can go here
 }
 
-# Invoke the function for testing
-choose_disk
 
 # INSTALL TO WHAT DEVICE?
 get_install_device(){
