@@ -498,6 +498,14 @@ choose_disk() {
     echo "$selected_disk_path"
 }
 
+# Example usage:
+selected_disk=$(choose_disk)
+if [ -n "$selected_disk" ]; then
+    echo "You selected $selected_disk"
+else
+    echo "No disk selected or operation canceled."
+fi
+
 # INSTALL TO WHAT DEVICE?
 get_install_device(){
     device=$(choose_disk)
