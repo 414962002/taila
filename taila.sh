@@ -848,8 +848,8 @@ diskmenu(){
 
             "L") USE_LVM='TRUE'; check_tasks 4; lv_create ;;
 
-            "M") device=$(choose_disk); clear; bash --init-file <(parted /dev/"$device"  1>&1 2>&2) ; check_tasks 4 ;;
-
+            # "M") device=$(choose_disk); clear; bash --init-file <(parted /dev/"$device"  1>&1 2>&2) ; check_tasks 4 ;;
+            "M") device=$(choose_disk); clear; parted /dev/$device ; check_tasks 4 ;;
             "R") startmenu ;;
         esac
     done
