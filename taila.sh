@@ -456,15 +456,34 @@ show_error(){
 
 # SELECT INSTALLATION DISK
 choose_disk(){
-       depth=$(lsblk | grep 'disk' | wc -l)
-       local DISKS=()
-       for d in $(lsblk | grep disk | awk '{printf "%s\n%s \\\n",$1,$4}'); do
-            DISKS+=("$d")
-       done
+    # Fetch disk details
+    mapfile -t disks < <(lsblk -do NAME,SIZE,MODEL | grep -E 'disk$' | awk '{print $1, $2, $3}')
 
-       whiptail --title "CHOOSE AN INSTALLATION DISK" \
-           --radiolist " Your Installation Disk: " 20 70 "$depth" \
-           "${DISKS[@]}" 3>&1 1>&2 2>&3
+    # Check if we found any disks
+    if [ ${#disks[@]} -eq 0 ]; then
+        whiptail --title "Error" --msgbox "No disks found. Please ensure your disks are connected." 10 60
+        return 1
+    fi
+
+    # Prepare disk choices for whiptail
+    local choices=()
+    for disk in "${disks[@]}"; do
+        # Disk name is sufficient for the tag, rest is for the user to read
+        choices+=("$disk" "")
+    done
+
+    # Use whiptail to present choices to the user
+    local disk_choice
+    disk_choice=$(whiptail --title "Choose an Installation Disk" --menu "Select a disk:" 20 78 10 "${choices[@]}" 3>&2 2>&1 1>&3)
+
+    if [ -z "$disk_choice" ]; then
+        whiptail --title "Error" --msgbox "No disk selected. Exiting." 10 60
+        return 1
+    else
+        # Returning or processing the selected disk
+        echo "Selected disk: $disk_choice"
+        # You can further process the selected disk as needed
+    fi
 }
 
 # INSTALL TO WHAT DEVICE?
