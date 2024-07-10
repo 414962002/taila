@@ -455,17 +455,34 @@ show_error(){
 #################  DISK FUNCTIONS  ########################
 
 # SELECT INSTALLATION DISK
-choose_disk(){
-    depth=$(lsblk | grep 'disk' | wc -l)
-    local DISKS=()
-    for d in $(lsblk | grep disk | awk '{printf "%s\n%s \\\n",$1,$4}'); do
-         DISKS+=("$d")
+choose_disk() {
+    # Gather the list of disks and their sizes
+    local disks_info=()
+    IFS=$'\n' # Change the Internal Field Separator to new line for correct array population
+    for line in $(lsblk -dpno NAME,SIZE,TYPE | awk '/disk/{printf "%s \"%s\" OFF \n", $1, $2}'); do
+        disks_info+=("$line")
     done
+    IFS=$' \t\n' # Reset IFS to default
 
-    whiptail --title "CHOOSE AN INSTALLATION DISK" \
-        --radiolist " Your Installation Disk: " 20 70 "$depth" \
-        "${DISKS[@]}" 3>&1 1>&2 2>&3
+    local depth="${#disks_info[@]}"
+
+    # Use whiptail to let the user choose a disk, storing the chosen disk in 'chosen_disk'
+    local chosen_disk=$(whiptail --title "CHOOSE AN INSTALLATION DISK" \
+        --radiolist "Choose Your Installation Disk:" 20 70 "$depth" \
+        "${disks_info[@]}" 3>&1 1>&2 2>&3)
+
+    # Check if the user made a selection
+    if [ -z "$chosen_disk" ]; then
+        echo "No disk selected, operation cancelled."
+        return 1  # Return a non-zero status to indicate failure/no selection
+    else
+        echo "You selected: $chosen_disk"
+        # Proceed with installation or further actions using the selected disk
+        # ... your code here ...
+    fi
 }
+
+choose_disk
 
 # INSTALL TO WHAT DEVICE?
 get_install_device(){
