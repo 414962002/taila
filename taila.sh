@@ -63,7 +63,7 @@ TIMEZONE='America/New_York'
 LOCALE="en_US.UTF-8"
 KEYBOARD="us"
 # Perhaps I will use this to determine a user's locale setting; I don't use it right now.
-EXT_IP=$( dig +short myip.opendns.com @resolver1.opendns.com )
+# EXT_IP=$( dig +short myip.opendns.com @resolver1.opendns.com )
 
 
 
