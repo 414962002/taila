@@ -63,7 +63,7 @@ TIMEZONE='America/New_York'
 LOCALE="en_US.UTF-8"
 KEYBOARD="us"
 # Perhaps I will use this to determine a user's locale setting; I don't use it right now.
-# EXT_IP=$( dig +short myip.opendns.com @resolver1.opendns.com )
+EXT_IP=$( dig +short myip.opendns.com @resolver1.opendns.com )
 
 
 
@@ -455,56 +455,17 @@ show_error(){
 #################  DISK FUNCTIONS  ########################
 
 # SELECT INSTALLATION DISK
-choose_disk() {
-    # Fetch disk details
-    mapfile -t disks < <(lsblk -dpno NAME,SIZE,MODEL | grep -E 'disk$')
-    
-    # Prepare disk choices for whiptail
-    local choices=()
-    for disk in "${disks[@]}"; do
-        # Extract name and size for the disk
-        disk_name=$(echo "$disk" | awk '{print $1}')
-        disk_info=$(echo "$disk" | awk '{$1=""; print $0}')
-        disk_name=${disk_name#/dev/} # Remove '/dev/' for whiptail display
-        choices+=("$disk_name" "$disk_info" OFF)
-    done
-    
-    # Check if we found any disks
-    if [ ${#choices[@]} -eq 0 ]; then
-        whiptail --title "Error" --msgbox "No disks found. Please ensure your disks are connected." 10 60
-        return 1
-    fi
-    
-    # Use whiptail to present choices to the user
-    local disk_choice
-    disk_choice=$(whiptail --title "Choose an Installation Disk" --radiolist \
-        "Select a disk (use space to select):" 20 70 10 "${choices[@]}" 3>&2 2>&1 1>&3)
-    
-    # Check if a disk was selected
-    if [ -z "$disk_choice" ]; then
-        whiptail --title "Warning" --msgbox "No disk selected. Operation canceled." 10 60
-        return 1
-    fi
-    
-    # Construct the full device path
-    local selected_disk_path="/dev/$disk_choice"
-    
-    # Verify the selected disk path
-    if [ ! -b "$selected_disk_path" ]; then
-        whiptail --title "Error" --msgbox "Invalid disk selected: $disk_choice. Please select a valid disk." 10 60
-        return 1
-    fi
+choose_disk(){
+       depth=$(lsblk | grep 'disk' | wc -l)
+       local DISKS=()
+       for d in $(lsblk | grep disk | awk '{printf "%s\n%s \\\n",$1,$4}'); do
+            DISKS+=("$d")
+       done
 
-    echo "$selected_disk_path"
+       whiptail --title "CHOOSE AN INSTALLATION DISK" \
+           --radiolist " Your Installation Disk: " 20 70 "$depth" \
+           "${DISKS[@]}" 3>&1 1>&2 2>&3
 }
-
-# Example usage:
-selected_disk=$(choose_disk)
-if [ -n "$selected_disk" ]; then
-    echo "You selected $selected_disk"
-else
-    echo "No disk selected or operation canceled."
-fi
 
 # INSTALL TO WHAT DEVICE?
 get_install_device(){
@@ -887,8 +848,8 @@ diskmenu(){
 
             "L") USE_LVM='TRUE'; check_tasks 4; lv_create ;;
 
-            # "M") device=$(choose_disk); clear; bash --init-file <(parted /dev/"$device"  1>&1 2>&2) ; check_tasks 4 ;;
-            "M") device=$(choose_disk); clear; parted /dev/$device ; check_tasks 4 ;;
+            "M") device=$(choose_disk); clear; bash --init-file <(parted /dev/"$device"  1>&1 2>&2) ; check_tasks 4 ;;
+
             "R") startmenu ;;
         esac
     done
