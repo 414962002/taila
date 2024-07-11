@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Enable debugging to print each command before it gets executed
+set -x
 
 ################################
 ###    GLOBAL VARIABLES  #######
