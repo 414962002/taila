@@ -1,50 +1,5 @@
 #!/usr/bin/env bash
 
-# Enable debugging to print each command before it gets executed
-set -x
-
-#!/usr/bin/env bash
-
-# Enable debugging to print each command before it gets executed
-set -x
-
-# Improved Logging Setup
-LOGFILE="$(dirname "$(readlink -f "$0")")/install.log"
-exec 3>&1 4>&2 1>>"${LOGFILE}" 2>&1 # Redirect stdout and stderr to logfile, but keep fd 3 and 4 as the original stdout/stderr.
-
-# Function to log with timestamps
-log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $*" >&3
-}
-
-# Example of function entry and exit logging
-example_function() {
-    log "Entering ${FUNCNAME[0]}"
-    # Function's logic here
-    log "Exiting ${FUNCNAME[0]}"
-}
-
-# Error handling
-error_handling() {
-    local exit_status=$1
-    local last_command=$2
-    if [ $exit_status -ne 0 ]; then
-        log "ERROR: Command '${last_command}' exited with status ${exit_status}"
-        log "Please check the log file for more information."
-        exit $exit_status
-    fi
-}
-
-# Trap ERR to handle errors globally
-trap 'error_handling $? $BASH_COMMAND' ERR
-
-log "Script execution started."
-
-# Place your script logic here
-example_function
-
-log "Script execution completed."
-
 ################################
 ###    GLOBAL VARIABLES  #######
 ################################
