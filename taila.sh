@@ -730,13 +730,20 @@ part_disk(){
     if $( whiptail --backtitle "DISK FORMATTING" --title "Formatting Drive" --yesno "Partitioning Drive EFI: $EFI_SIZE ROOT: $ROOT_SIZE SWAP: $SWAP_SIZE HOME: $HOME_SIZE  OK to proceed?" 10 59 3>&1 1>&2 2>&3 ) ; then
     
     
-        if $(efi_boot_mode); then
-                sgdisk -Z "$IN_DEVICE"                                         &>> $LOGFILE
-                sgdisk -n 1::+"$EFI_SIZE" -t 1:ef00 -c 1:EFI "$IN_DEVICE"      &>> $LOGFILE
-                sgdisk -n 2::+"$ROOT_SIZE" -t 2:8300 -c 2:ROOT "$IN_DEVICE"    &>> $LOGFILE
-                sgdisk -n 3::+"$SWAP_SIZE" -t 3:8200 -c 3:SWAP "$IN_DEVICE"    &>> $LOGFILE
-                sgdisk -n 4 -c 4:HOME "$IN_DEVICE"                             &>> $LOGFILE
-        else
+    if [[ "$IN_DEVICE" == "/dev" ]]; then
+        echo "Error: Device path is not specified correctly."
+        return 1  # Exit the function with an error status
+    fi
+
+    # Example partitioning command corrected to use $IN_DEVICE
+    if $(efi_boot_mode); then
+            sgdisk -Z "$IN_DEVICE"                                         &>> $LOGFILE
+            sgdisk -n 1::+"$EFI_SIZE" -t 1:ef00 -c 1:EFI "$IN_DEVICE"      &>> $LOGFILE
+            sgdisk -n 2::+"$ROOT_SIZE" -t 2:8300 -c 2:ROOT "$IN_DEVICE"    &>> $LOGFILE
+            # Further operations...
+    else
+        # Handle non-EFI mode appropriately
+    fi
         # For non-EFI. Eg. for MBR systems 
 cat > /tmp/sfdisk.cmd << EOF
 $BOOT_DEVICE : start= 2048, size=+$BOOT_SIZE, type=83, bootable
