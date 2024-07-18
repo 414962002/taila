@@ -455,37 +455,16 @@ show_error(){
 #################  DISK FUNCTIONS  ########################
 
 # SELECT INSTALLATION DISK
-# choose_disk(){
-#        depth=$(lsblk | grep 'disk' | wc -l)
-#        local DISKS=()
-#        for d in $(lsblk | grep disk | awk '{printf "%s\n%s \\\n",$1,$4}'); do
-#             DISKS+=("$d")
-#        done
+choose_disk(){
+       depth=$(lsblk | grep 'disk' | wc -l)
+       local DISKS=()
+       for d in $(lsblk | grep disk | awk '{printf "%s\n%s \\\n",$1,$4}'); do
+            DISKS+=("$d")
+       done
 
-#        whiptail --title "CHOOSE AN INSTALLATION DISK" \
-#            --radiolist " Your Installation Disk: " 20 70 "$depth" \
-#            "${DISKS[@]}" 3>&1 1>&2 2>&3
-# }
-
-choose_disk() {
-    local IFS=$'\n' # Change the Internal Field Separator to newline for proper looping
-    local DISKS=()
-    local index=0
-    # Use lsblk to list disk devices with their sizes and models
-    for line in $(lsblk -dnro NAME,SIZE,MODEL | awk '{print $1, $2, $3}'); do
-        local name=$(echo "$line" | awk '{print $1}') # Extract the device name
-        local size=$(echo "$line" | awk '{print $2}') # Extract the size
-        local model=$(echo "$line" | awk '{$1=$2=""; print $0}' | sed 's/^[ \t]*//') # Extract the model, removing leading spaces
-        DISKS+=("$name" "$model - $size" "OFF") # Append to the array
-        ((index++))
-    done
-
-    # Display the whiptail dialog
-    local chosen_disk=$(whiptail --title "CHOOSE AN INSTALLATION DISK" \
-        --radiolist "Select Your Installation Disk:" 20 70 "$index" \
-        "${DISKS[@]}" 3>&1 1>&2 2>&3)
-
-    echo "/dev/$chosen_disk" # Output the selected disk, prefixing it with /dev/
+       whiptail --title "CHOOSE AN INSTALLATION DISK" \
+           --radiolist " Your Installation Disk: " 20 70 "$depth" \
+           "${DISKS[@]}" 3>&1 1>&2 2>&3
 }
 
 # INSTALL TO WHAT DEVICE?
