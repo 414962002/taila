@@ -13,6 +13,12 @@
 # VERIFY BOOT MODE
 #  This is not a variable but a function that determines how the program will
 #  branch in its disktable.
+
+    # Checks if the system is booting in EFI mode by checking if the efivars directory exists.
+    #
+    # Returns:
+    #   0 if the system is booting in EFI mode
+    #   1 if the system is not booting in EFI mode
 efi_boot_mode(){
     # if the efivars directory exists we definitely have an EFI BIOS
     # otherwise, we could have a non-standard EFI or even an MBR-only system
@@ -22,18 +28,20 @@ efi_boot_mode(){
 LOGFILE='/tmp/install.log'
 
 # CHECK IF UEFI BIOS OR NOT AND DISKLABEL
+# 
+# If the system is booting in EFI mode, we should use a GPT disk table. 
+# Otherwise, we should use an MBR disk table.
 if $(efi_boot_mode); then 
     DISKTABLE='GPT'
 else
     DISKTABLE='MBR'
 fi
 
-# PUT THESE IN GLOBAL NAMESPACE
-IN_DEVICE=''
-EFI_SLICE=''
-ROOT_SLICE=''
-HOME_SLICE=''
-SWAP_SLICE=''
+# GLOBAL VARIABLES IN GLOBAL NAMESPACE
+#
+# These variables hold the names of the various partitions and logical volumes
+# that will be created by the script.  They are declared in the global namespace
+# so they can be updated in local functions.
 
 # DEFAULT GRAPHICS DRIVERS ETC   ---  change as needed via whiptail later in script ---
 wifi_drivers=(broadcom-wl-dkms iwd)   # find chipset for YOUR wifi card!
@@ -41,14 +49,18 @@ graphics_driver=(xf86-video-vmware)   # $( pacman -Ss xf86-video- ) will list av
 display_mgr=(lightdm)                 # lightdm goes well with cinnamon desktop
 mydesktop=( "${cinnamon_desktop[@]}" )
 
-# VOL GROUP VARIABLES
-USE_LVM=''   # gets set programmatically
-USE_CRYPT='' # gets set programmatically
-CRYPT_PART="arch_crypt"   # encrypted volume group for cryptsetup
-VOL_GROUP="arch_vg"
-LV_ROOT="ArchRoot"
-LV_HOME="ArchHome"
-LV_SWAP="ArchSwap"
+# VOL_GROUP VARIABLES
+#   These variables are used to create a volume group (VG) and logical volumes (LVs) for the root filesystem,
+#   swap space, and home directory.
+#
+#   USE_LVM and USE_CRYPT are used to determine whether or not to use LVM and LUKS encryption respectively.
+#   They are set programmatically in the functions lv_create() and crypt_setup() respectively.
+#
+#   CRYPT_PART is the name of the encrypted volume group for cryptsetup.
+#   VOL_GROUP is the name of the volume group that will be created.
+#   LV_ROOT is the name of the logical volume that will be created for the root filesystem.
+#   LV_HOME is the name of the logical volume that will be created for the home directory.
+#   LV_SWAP is the name of the logical volume that will be created for swap space.
 
 # PARTITION SIZES  (You can edit these if desired)
 BOOT_SIZE=512M     # BOOT applies to non-efi BIOS and MBR disklable
